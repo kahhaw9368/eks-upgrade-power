@@ -1,6 +1,6 @@
-# EKS Upgrade Readiness Power for Kiro
+# EKS Upgrade Readiness Skill
 
-A Kiro Power that assesses your EKS cluster's readiness for a Kubernetes version upgrade. Connects to your live cluster via the AWS-managed EKS MCP server, runs automated checks, calculates a readiness score (0-100%), and generates a detailed report with pre-filled AWS CLI commands.
+A Claude Skill that assesses your EKS cluster's readiness for a Kubernetes version upgrade. Connects to your live cluster via the AWS-managed EKS MCP server, curated promots, runs automated checks, calculates a readiness score (0-100%), and generates a detailed report with pre-filled AWS CLI commands.
 
 Upgrade with confidence. Know exactly what will break before you hit the button — deprecated APIs, incompatible add-ons, node version skew, workload risks. No surprises, no rollbacks, no 2 AM pages. Just a clear, prioritized action plan that turns a stressful upgrade into a routine maintenance window.
 
@@ -9,14 +9,14 @@ Upgrade with confidence. Know exactly what will break before you hit the button 
 ### Step 1: Clone this repo
 
 ```bash
-git clone https://github.com/thiankahaw/eks-upgrade-power.git
+git clone https://github.com/kahhaw9368/eks-upgrade-power.git
 ```
 
-Open the cloned folder in Kiro as your workspace.
+Open the cloned folder in your IDE as your workspace.
 
 ### Step 2: Install MCP Servers
 
-This power requires two MCP servers. You need to configure them at the **workspace level** so they don't interfere with any MCP servers you already have configured globally.
+This skill requires two MCP servers. You need to configure them at the **workspace level** so they don't interfere with any MCP servers you already have configured globally.
 
 Create the file `.kiro/settings/mcp.json` in this workspace (Kiro may have already created the `.kiro` folder):
 
