@@ -1,6 +1,6 @@
 # EKS Upgrade Readiness Skill for Claude Code
 
-A Claude Code skill that assesses your EKS cluster's readiness for a Kubernetes version upgrade. Connects to your live cluster via AWS CLI and kubectl, runs automated checks, calculates a readiness score (0-100%), and generates a detailed report with pre-filled AWS CLI commands.
+A Claude Code skill that assesses your EKS cluster's readiness for a Kubernetes version upgrade. Connects to your live cluster via the AWS-managed EKS MCP server, runs automated checks, calculates a readiness score (0-100%), and generates a detailed report with pre-filled AWS CLI commands.
 
 Upgrade with confidence. Know exactly what will break before you hit the button — deprecated APIs, incompatible add-ons, node version skew, workload risks. No surprises, no rollbacks, no 2 AM pages. Just a clear, prioritized action plan that turns a stressful upgrade into a routine maintenance window.
 
@@ -14,9 +14,9 @@ git clone https://github.com/kahhaw9368/eks-upgrade-power.git
 
 Open the cloned folder as your working directory in Claude Code.
 
-### Step 2: (Optional) Install MCP Servers
+### Step 2: Install MCP Servers
 
-This skill works with AWS CLI and kubectl out of the box. For enhanced functionality, you can optionally configure two MCP servers in `.claude/settings.json`:
+This skill requires the EKS MCP server to interact with your cluster. Configure the following MCP servers in `.claude/settings.json`:
 
 ```json
 {
@@ -39,7 +39,7 @@ This skill works with AWS CLI and kubectl out of the box. For enhanced functiona
 }
 ```
 
-> **Prerequisites for MCP servers:** Python 3.10+ and uv installed ([Install uv](https://docs.astral.sh/uv/getting-started/installation/))
+> **Prerequisites:** Python 3.10+ and uv installed ([Install uv](https://docs.astral.sh/uv/getting-started/installation/))
 
 #### Using a specific AWS profile or region
 
@@ -50,7 +50,7 @@ export AWS_PROFILE=your-profile-name
 export AWS_REGION=us-west-2
 ```
 
-Or add to the MCP server's `env` section if using MCP servers.
+Or add to the MCP server's `env` section.
 
 ### Step 3: Verify Prerequisites
 
