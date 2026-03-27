@@ -9,7 +9,7 @@ Upgrade with confidence. Know exactly what will break before you hit the button 
 ### Step 1: Clone this repo
 
 ```bash
-git clone https://github.com/kahhaw9368/eks-upgrade-power.git
+git clone https://github.com/kahhaw9368/eks-upgrade-skill.git
 ```
 
 Open the cloned folder as your working directory in Claude Code.
