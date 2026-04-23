@@ -58,7 +58,7 @@ Run the permission check script to validate everything is set up correctly:
 ./tools/check_permissions.sh
 
 # Check full permissions against a specific cluster
-./tools/check_permissions.sh my-cluster-name us-west-2
+./tools/check_permissions.sh my-cluster-name your-region-name
 ```
 
 ## What Gets Assessed
