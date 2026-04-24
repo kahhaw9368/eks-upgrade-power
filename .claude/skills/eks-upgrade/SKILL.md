@@ -100,7 +100,7 @@ Run `aws eks list-clusters` to discover available clusters.
 > **Cannot access EKS clusters.** Try these steps:
 > 1. Check that AWS credentials are configured: `aws sts get-caller-identity`
 > 2. Check your region: `aws eks list-clusters --region <region>`
-> 3. Run the permission check: `${CLAUDE_SKILL_DIR}/tools/check_permissions.sh`
+> 3. Check that MCP servers are enabled in Claude Code
 
 Wait for the user to resolve the issue.
 
@@ -115,7 +115,7 @@ After describing the cluster, verify key permissions by attempting:
 2. `aws eks list-addons --cluster-name <cluster>`
 3. `aws eks list-insights --cluster-name <cluster>`
 
-If any fail with AccessDenied, show the user which permission is missing and point them to `${CLAUDE_SKILL_DIR}/tools/check_permissions.sh <cluster> <region>` for a full check. Do NOT proceed until permissions are confirmed.
+If any fail with AccessDenied, show the user exactly which permission is missing and list the required IAM actions. Do NOT proceed until permissions are confirmed.
 
 **Action 4 — Determine target version**
 
@@ -163,7 +163,6 @@ Read `${CLAUDE_SKILL_DIR}/steering/report-generation.md` and produce the report.
 ## Data Files
 
 - **OSS Add-on Compatibility Matrix:** `${CLAUDE_SKILL_DIR}/data/oss_addon_matrix.json` — use as fallback when web search is unavailable
-- **Permission Check Script:** `${CLAUDE_SKILL_DIR}/tools/check_permissions.sh` — pre-flight validator
 - **HTML Converter:** `${CLAUDE_SKILL_DIR}/tools/md_to_html.py` — converts markdown reports to HTML
 
 ## Report Output

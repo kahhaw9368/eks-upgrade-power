@@ -56,18 +56,6 @@ Then run:
 
 The skill discovers your EKS clusters, asks which cluster and target version, and walks you through the assessment.
 
-### Verify Prerequisites
-
-Run the permission check script to validate everything is set up correctly:
-
-```bash
-# List available clusters and check basic connectivity
-.claude/skills/eks-upgrade/tools/check_permissions.sh
-
-# Check full permissions against a specific cluster
-.claude/skills/eks-upgrade/tools/check_permissions.sh my-cluster-name us-west-2
-```
-
 ## What Gets Assessed
 
 | # | Area | Examples |
@@ -227,13 +215,7 @@ The skill lists clusters in the region configured in your AWS credentials. To ta
 <details>
 <summary><strong>Permission denied errors</strong></summary>
 
-Run the permission check script:
-
-```bash
-.claude/skills/eks-upgrade/tools/check_permissions.sh <cluster-name> <region>
-```
-
-It will tell you exactly which permissions are missing.
+Ensure your IAM identity has the permissions listed in [Required Permissions](#required-permissions) and has a Kubernetes RBAC binding via [EKS access entry](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html) or `aws-auth` ConfigMap.
 
 </details>
 
@@ -272,7 +254,6 @@ eks-upgrade-skill/
             ├── data/
             │   └── oss_addon_matrix.json
             └── tools/
-                ├── check_permissions.sh
                 └── md_to_html.py
 ```
 
