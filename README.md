@@ -36,7 +36,7 @@ Checks are informed by the [EKS Best Practices Guide](https://docs.aws.amazon.co
 ### Quick Start
 
 ```bash
-git clone https://github.com/kahhaw9368/eks-upgrade-skill.git
+git clone https://github.com/<your-org>/eks-upgrade-skill.git
 cd eks-upgrade-skill
 claude
 ```
@@ -55,10 +55,10 @@ Run the permission check script to validate everything is set up correctly:
 
 ```bash
 # List available clusters and check basic connectivity
-./tools/check_permissions.sh
+.claude/skills/eks-upgrade/tools/check_permissions.sh
 
 # Check full permissions against a specific cluster
-./tools/check_permissions.sh my-cluster-name your-region-name
+.claude/skills/eks-upgrade/tools/check_permissions.sh my-cluster-name us-west-2
 ```
 
 ## What Gets Assessed
@@ -99,7 +99,7 @@ Reports are generated in the workspace root:
 
 Each report includes a readiness score, score breakdown, blockers & critical actions, per-section findings, and a step-by-step upgrade plan with pre-filled CLI commands.
 
-To convert to HTML: `python3 tools/md_to_html.py <report>.md` (zero external dependencies).
+To convert to HTML: `python3 .claude/skills/eks-upgrade/tools/md_to_html.py <report>.md` (zero external dependencies).
 
 **Sample upgrade plan**
 
@@ -232,7 +232,7 @@ The skill lists clusters in the region configured in your AWS credentials. To ta
 Run the permission check script:
 
 ```bash
-./tools/check_permissions.sh <cluster-name> <region>
+.claude/skills/eks-upgrade/tools/check_permissions.sh <cluster-name> <region>
 ```
 
 It will tell you exactly which permissions are missing.
@@ -246,40 +246,41 @@ The MCP server runs in its own process and doesn't inherit your shell environmen
 ```
 eks-upgrade-skill/
 ├── README.md                         # This file
-├── .claude/
-│   └── skills/
-│       └── eks-upgrade/
-│           ├── SKILL.md              # Skill definition & agent workflow
-│           ├── steering/             # Assessment logic (agent instructions)
-│           │   ├── version-validation.md
-│           │   ├── breaking-changes.md
-│           │   ├── deprecated-apis.md
-│           │   ├── addon-compatibility.md
-│           │   ├── node-readiness.md
-│           │   ├── workload-risks.md
-│           │   ├── upgrade-insights.md
-│           │   └── report-generation.md
-│           ├── data/
-│           │   └── oss_addon_matrix.json
-│           └── tools/
-│               ├── check_permissions.sh
-│               └── md_to_html.py
-├── tools/
-│   ├── md_to_html.py                 # Markdown → HTML converter
-│   └── check_permissions.sh          # Pre-flight permission validator
-└── data/
-    └── oss_addon_matrix.json         # OSS add-on compatibility matrix
+├── LICENSE                           # Apache 2.0 license
+├── SECURITY.md                       # Security policy & responsible disclosure
+├── docs/                             # Sample report screenshots
+│   ├── sample-report-summary.png
+│   ├── sample-report-findings.png
+│   └── sample-report-upgrade-plan.png
+└── .claude/
+    └── skills/
+        └── eks-upgrade/
+            ├── SKILL.md              # Skill definition & agent workflow
+            ├── steering/             # Assessment logic (agent instructions)
+            │   ├── version-validation.md
+            │   ├── breaking-changes.md
+            │   ├── deprecated-apis.md
+            │   ├── addon-compatibility.md
+            │   ├── node-readiness.md
+            │   ├── workload-risks.md
+            │   ├── upgrade-insights.md
+            │   └── report-generation.md
+            ├── data/
+            │   └── oss_addon_matrix.json
+            └── tools/
+                ├── check_permissions.sh
+                └── md_to_html.py
 ```
 
 ## Contributing
 
-Contributions are welcome. Please [open an issue](https://github.com/kahhaw9368/eks-upgrade-skill/issues) first to discuss what you'd like to change.
+Contributions are welcome. Please [open an issue](https://github.com/<your-org>/eks-upgrade-skill/issues) first to discuss what you'd like to change.
 
 ## Security
 
 This skill is **read-only** and does not create, modify, or delete any AWS or Kubernetes resources. All operations are describe, list, and get calls.
 
-If you discover a security issue, please report it via [GitHub Issues](https://github.com/kahhaw9368/eks-upgrade-skill/issues) rather than a public comment.
+If you discover a security vulnerability, please see [SECURITY.md](SECURITY.md) for responsible disclosure instructions. Do not open a public issue for security vulnerabilities.
 
 ## License
 

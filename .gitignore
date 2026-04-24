@@ -1,10 +1,23 @@
+# Python
 __pycache__/
 *.pyc
+venv/
+
+# macOS
 .DS_Store
-*.html
+
+# Environment & secrets
+.env
+
+# Local Claude Code settings (contains user-specific permissions)
+.claude/settings.local.json
+
+# MCP server config (users configure their own region/profile)
+.mcp.json
+
+# Generated assessment reports
+EKS-Upgrade-Assessment-*
+
+# Testing
 .hypothesis/
 .pytest_cache/
-venv/
-.env
-.mcp.json
-EKS-Upgrade-Assessment-*

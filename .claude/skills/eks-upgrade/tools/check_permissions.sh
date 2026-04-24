@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# EKS Upgrade Power — Pre-flight Permission Check
+# EKS Upgrade Skill — Pre-flight Permission Check
 #
 # Validates that the current AWS credentials have the required
 # permissions to run the EKS upgrade readiness assessment.
@@ -39,7 +39,7 @@ check_warn() {
 }
 
 echo ""
-echo -e "${BOLD}EKS Upgrade Power — Permission Check${NC}"
+echo -e "${BOLD}EKS Upgrade Skill — Permission Check${NC}"
 echo "======================================"
 echo ""
 
@@ -233,7 +233,7 @@ echo ""
 if [ "$fail_count" -eq 0 ]; then
     echo -e "${GREEN}${BOLD}All required permissions verified. Ready to run the assessment.${NC}"
     echo ""
-    echo "Open Kiro and ask: \"Run an EKS upgrade readiness assessment\""
+    echo "Open Claude Code and run: /eks-upgrade"
 else
     echo -e "${RED}${BOLD}$fail_count permission check(s) failed.${NC}"
     echo ""
