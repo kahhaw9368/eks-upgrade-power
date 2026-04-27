@@ -63,7 +63,7 @@ The skill discovers your EKS clusters, asks which cluster and target version, an
 | 01 | Version Validation | Upgrade path validity, version skew policy, support status & cost |
 | 02 | Breaking Changes | Per-version API removals, behavioral changes, resource impact |
 | 03 | Deprecated APIs | Live scan of cluster resources + AWS Upgrade Insights |
-| 04 | Add-on Compatibility | Core EKS add-ons, OSS add-ons (via matrix), Karpenter |
+| 04 | Add-on Compatibility | Core EKS add-ons, OSS add-ons (live lookup from upstream docs), Karpenter |
 | 05 | Node Readiness | AMI type (AL2→AL2023), container runtime, self-managed nodes |
 | 06 | Workload Risks | Single replicas, missing PDBs, health probes, resource requests |
 | 07 | AWS Upgrade Insights | Official EKS pre-upgrade checks and recommendations |
@@ -252,7 +252,7 @@ eks-upgrade-skill/
             │   ├── upgrade-insights.md
             │   └── report-generation.md
             ├── data/
-            │   └── oss_addon_matrix.json
+            │   └── oss_addon_registry.json
             └── tools/
                 └── md_to_html.py
 ```
