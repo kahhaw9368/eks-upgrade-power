@@ -162,7 +162,7 @@ Read `${CLAUDE_SKILL_DIR}/steering/report-generation.md` and produce the report.
 
 ## Data Files
 
-- **OSS Add-on Compatibility Matrix:** `${CLAUDE_SKILL_DIR}/data/oss_addon_matrix.json` — use as fallback when web search is unavailable
+- **OSS Add-on Registry:** `${CLAUDE_SKILL_DIR}/data/oss_addon_registry.json` — identifiers and authoritative upstream URLs for common OSS add-ons. This file does NOT contain compatibility data. Compatibility is always verified live via the registry's `compatibility_url` and `releases_url` fields. If an add-on is not in the registry or the upstream source is unreachable, report UNKNOWN — never guess.
 - **HTML Converter:** `${CLAUDE_SKILL_DIR}/tools/md_to_html.py` — converts markdown reports to HTML
 
 ## Report Output

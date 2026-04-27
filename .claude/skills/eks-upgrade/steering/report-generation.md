@@ -43,22 +43,28 @@ for each node_group:
 node_skew_deduction = min(node_skew_deduction, 20)
 
 # --- Category 4: Add-on Compatibility (max deduction: 15) ---
-# COUNTING UNIT: each add-on (by name).
+# COUNTING UNIT: each add-on (by name) + each unidentified workload.
 # CLASSIFICATION RULES:
 #   - "critical add-on" = vpc-cni, coredns, kube-proxy, aws-ebs-csi-driver
-#   - "optional add-on" = all other managed add-ons
+#   - "optional add-on" = all other managed add-ons and identified OSS add-ons
 #   - Status DEGRADED or FAILED with correct version = treat as critical/optional
 #     incompatible (same deduction as version incompatibility)
 #   - Status ACTIVE but version behind = "update recommended"
+#   - UNKNOWN_VERIFIABLE = identified but upstream compat source unreachable/ambiguous
+#   - UNKNOWN_UNIDENTIFIED = workload looks like an add-on but couldn't be identified
 addon_deduction = 0
 for each addon:
-    if addon.status in [DEGRADED, FAILED] or addon.version_incompatible_with_target:
+    if addon.verdict == "INCOMPATIBLE" or addon.status in [DEGRADED, FAILED]:
         if addon.name in [vpc-cni, coredns, kube-proxy, aws-ebs-csi-driver]:
             addon_deduction += 5   # critical add-on
         else:
             addon_deduction += 3   # optional add-on
-    elif addon.version_behind_but_compatible:
-        addon_deduction += 1       # update recommended
+    elif addon.verdict == "UNKNOWN_VERIFIABLE":
+        addon_deduction += 2       # identified, compatibility unverified
+    elif addon.verdict == "UPDATE_RECOMMENDED":
+        addon_deduction += 1       # version behind but compatible
+for each unidentified_workload:
+    addon_deduction += 2           # UNKNOWN_UNIDENTIFIED
 addon_deduction = min(addon_deduction, 15)
 
 # --- Category 5: Karpenter (max deduction: 10) ---
@@ -259,9 +265,33 @@ then conclude with what to do about it.
 
 ## Add-on Inventory
 
-| Add-on | Type | Version | Status | Compatible |
-|--------|------|---------|--------|------------|
-| [name] | Managed/Self-managed | [ver] | [health] | ✅/⚠️/❌ |
+| Add-on | Type | Version | Status | Verdict | Source |
+|--------|------|---------|--------|---------|--------|
+| [name] | Managed/Self-managed/OSS | [ver] | [health] | COMPATIBLE/UPDATE_RECOMMENDED/INCOMPATIBLE/UNKNOWN_VERIFIABLE | [URL or "managed"] |
+
+## Unknown & Unidentified Add-ons
+
+Include this section if ANY add-on has verdict `UNKNOWN_VERIFIABLE` or `UNKNOWN_UNIDENTIFIED`.
+Omit the section entirely if everything was resolved.
+
+### Compatibility Unverified (UNKNOWN_VERIFIABLE)
+
+Add-ons the skill identified but could not verify against the target Kubernetes
+version. The user must check these manually before upgrading.
+
+| Add-on | Version | URL(s) Consulted | Why Unverified |
+|--------|---------|------------------|----------------|
+| [name] | [ver] | [url] | [e.g., page 404, no compat matrix found, ambiguous wording] |
+
+### Unidentified Workloads (UNKNOWN_UNIDENTIFIED)
+
+Workloads that appear to be add-ons (based on namespace or shape) but could not be
+identified. The user likely knows what these are — please review and confirm
+compatibility with the target version manually.
+
+| Kind | Name | Namespace | Image | Labels |
+|------|------|-----------|-------|--------|
+| [Deployment/DaemonSet/StatefulSet] | [name] | [ns] | [full image:tag] | [key labels present] |
 
 ## Node Group Summary
 

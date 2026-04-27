@@ -50,12 +50,25 @@ compatibility with the target Kubernetes version via web search.
 
 **Step 1: Discover OSS add-ons**
 1. List Deployments, DaemonSets, StatefulSets across all namespaces
-2. For each workload, extract add-on identity from:
+2. For each workload, extract add-on identity from (in priority order):
    - Labels: `app.kubernetes.io/name`, `app.kubernetes.io/version`
-   - Helm labels: `helm.sh/chart`
-   - Container image tags
+   - Helm labels: `helm.sh/chart`, `app.kubernetes.io/managed-by`
+   - Container image repo + tag (e.g., `quay.io/jetstack/cert-manager-controller:v1.15.0`)
 3. Exclude AWS-managed add-ons (vpc-cni, coredns, kube-proxy, ebs-csi) and Karpenter (checked separately)
-4. For each discovered add-on, record: name, version, namespace, identification method
+4. Exclude workloads in these system namespaces (treat as user apps, not add-ons only if they
+   clearly match a known add-on identifier): `kube-system` is included for add-on scan;
+   `default` and application namespaces are EXCLUDED unless the workload matches a known
+   add-on identifier in the registry.
+5. For each workload examined, classify it into exactly one bucket:
+
+   | Bucket | Condition | Action |
+   |--------|-----------|--------|
+   | **IDENTIFIED** | Matches a registry entry OR has clear labels/image identifying a known OSS project | Proceed to Step 2 |
+   | **UNIDENTIFIED ADD-ON** | In `kube-system`/`karpenter`/`cert-manager`/`monitoring` etc. namespace but no matching registry entry and unclear labels | Record and flag — see "Unidentified workloads" below |
+   | **USER APPLICATION** | In user namespace with no add-on indicators | Skip (covered by workload-risks scan) |
+
+6. For each IDENTIFIED add-on, record: name, version, namespace, identification method (which label/image matched).
+7. For each UNIDENTIFIED ADD-ON, record: workload kind, name, namespace, image(s), any labels present, and why it couldn't be identified.
 
 **Common OSS add-ons to look for:**
 - cert-manager
@@ -68,31 +81,93 @@ compatibility with the target Kubernetes version via web search.
 - prometheus / grafana
 - argocd / flux
 
-**Step 2: Web search for compatibility (MANDATORY for each discovered OSS add-on)**
+**Step 2: Verify compatibility via upstream sources (MANDATORY for each discovered OSS add-on)**
 
-For EACH OSS add-on found in the cluster, you MUST perform a web search to verify
-compatibility with the target Kubernetes version. Do NOT rely on LLM training data
-for version compatibility — it is likely outdated.
+Compatibility data is NEVER read from a local file. OSS projects ship faster than any
+shipped data file can keep up with, and stale data produces unsafe upgrade advice.
+Always fetch compatibility information live from the upstream project.
 
-**Search pattern:** Use `remote_web_search` with query:
-`"<addon-name> <addon-version> compatibility Kubernetes <target-version>"`
+**Lookup order (stop at the first that yields a definitive answer):**
 
-Example searches:
-- `"cert-manager 1.14 compatibility Kubernetes 1.31"`
-- `"istio 1.20 supported Kubernetes versions"`
-- `"aws-load-balancer-controller 2.7 EKS 1.31 compatibility"`
+1. **Check the local registry for the authoritative URL**
+   Read `${CLAUDE_SKILL_DIR}/data/oss_addon_registry.json`. If the add-on is listed,
+   use its `compatibility_url` (primary) and `releases_url` (fallback). The registry
+   contains identifiers and URLs — it does NOT contain compatibility data itself.
 
-**What to look for in search results:**
-1. Official compatibility matrix or supported versions page
-2. GitHub issues mentioning the addon + target Kubernetes version
-3. Known breaking changes or required minimum versions
+2. **Fetch the compatibility page**
+   Use `webFetch` on the registry's `compatibility_url`. Look for a supported-versions
+   table or statement that covers both the installed add-on version and the target
+   Kubernetes version.
 
-**If web search returns no results:** Report the add-on as "compatibility UNKNOWN — manual
-verification required" with MEDIUM severity. Do NOT assume it's compatible.
+3. **Fetch release notes if no compatibility page exists**
+   Use `webFetch` on `releases_url` and inspect the relevant release for "Kubernetes
+   compatibility" or "breaking changes" sections.
+
+4. **Fall back to web search only if the above fail**
+   Use `remote_web_search` with queries like:
+   - `"<addon-name> <addon-version> supported Kubernetes versions"`
+   - `"<addon-name> compatibility matrix"`
+   Prefer results from the project's own domain or GitHub org.
+
+5. **If the add-on is not in the registry**
+   Search with `remote_web_search` first to identify the authoritative source
+   (project docs or GitHub releases), then apply steps 2–3 against that source.
+
+**If no authoritative source can be reached or the answer is ambiguous:**
+Report the add-on as "compatibility UNKNOWN — manual verification required" with
+MEDIUM severity and include the URL(s) consulted. Do NOT assume compatibility.
+Do NOT fall back to LLM training data — it is likely outdated.
+
+**Verdict states (use exactly one per add-on):**
+
+| Verdict | Meaning | Severity | Score impact |
+|---------|---------|----------|--------------|
+| `COMPATIBLE` | Upstream source confirms installed version supports target K8s | — | 0 pts |
+| `UPDATE_RECOMMENDED` | Current version works but a newer version is recommended | LOW | 1 pt |
+| `INCOMPATIBLE` | Upstream source explicitly says installed version does not support target | HIGH | 3 pts (optional) / 5 pts (critical) |
+| `UNKNOWN_VERIFIABLE` | Add-on identified but upstream source unreachable or ambiguous | MEDIUM | 2 pts |
+| `UNKNOWN_UNIDENTIFIED` | Workload looks like an add-on but could not be identified | MEDIUM | 2 pts |
+
+Every discovered add-on MUST end with exactly one of these verdicts. "Probably fine"
+is not an allowed outcome.
+
+## Unidentified Workloads
+
+Workloads classified as UNIDENTIFIED ADD-ON in Step 1 are a distinct concern from
+UNKNOWN_VERIFIABLE add-ons. The skill found something add-on-shaped but cannot name it,
+which means the user likely knows what it is and the skill does not.
+
+**For each unidentified workload, collect:**
+- Workload kind (Deployment/DaemonSet/StatefulSet) and name
+- Namespace
+- Container image(s) including registry, repo, and tag
+- All present labels (to help the user recognize it)
+- Replica count
+
+**Report these in a dedicated "Unidentified Workloads" table in the report.** Do NOT
+silently drop them. The user needs to know which of their workloads the skill could
+not assess, so they can provide context or verify compatibility manually.
+
+**Do NOT guess the identity** from image names alone if the match is ambiguous. For
+example, `myregistry.internal/platform/controller:v2.1` is unidentified — not
+"probably a custom controller, assumed compatible". Ambiguity is reported, not resolved.
+
+**Registry notes field:** Some add-ons in the registry have a `notes` field flagging
+special handling (e.g., ingress-nginx retirement, cluster-autoscaler K8s version
+pinning). Always read and apply these notes.
 
 **Output per OSS add-on:**
 ```
-| Add-on | Version | Compatible with target? | Source | Notes |
+| Add-on | Version | Verdict | Source URL | Notes |
+```
+The `Verdict` column uses the exact states defined above (COMPATIBLE,
+UPDATE_RECOMMENDED, INCOMPATIBLE, UNKNOWN_VERIFIABLE, UNKNOWN_UNIDENTIFIED).
+The `Source URL` column is mandatory — it shows the user exactly where the verdict
+came from (or which URL failed to load) and lets them verify it.
+
+**Output for unidentified workloads:**
+```
+| Kind | Name | Namespace | Image | Labels | Why unidentified |
 ```
 
 ### 4.4 — Karpenter Compatibility
@@ -131,8 +206,10 @@ You MUST perform a web search to verify compatibility:
 
 | Finding | Deduction |
 |---------|-----------|
-| Critical add-on incompatible (vpc-cni, coredns, kube-proxy) | 5 pts each |
-| Optional add-on incompatible | 3 pts each |
-| Update recommended | 1 pt each |
-| Karpenter incompatible | 10 pts |
+| Critical add-on INCOMPATIBLE (vpc-cni, coredns, kube-proxy, ebs-csi) | 5 pts each |
+| Optional add-on INCOMPATIBLE | 3 pts each |
+| Add-on UNKNOWN_VERIFIABLE (could not verify upstream) | 2 pts each |
+| Workload UNKNOWN_UNIDENTIFIED (couldn't identify the add-on) | 2 pts each |
+| UPDATE_RECOMMENDED (behind but compatible) | 1 pt each |
+| Karpenter INCOMPATIBLE | 10 pts |
 | Max category deduction | 15 pts (add-ons) + 10 pts (Karpenter) |
